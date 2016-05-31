@@ -249,7 +249,11 @@ class LDA:
         self.components_ = (self.nzw_ + self.eta).astype(float)
         self.components_ /= np.sum(self.components_, axis=1)[:, np.newaxis]
         self.topic_word_ = self.components_
-        self.doc_topic_ = (self.ndz_ + self.alpha).astype(float)
+        alpha = self.alpha
+        if self.alpha_ > 0:
+            alpha = self.alpha * self.n_topics * (
+                (self.nz_ + self.alpha_) / (np.sum(self.nz_) + self.alpha_ * self.n_topics))
+        self.doc_topic_ = (self.ndz_ + alpha).astype(float)
         self.doc_topic_ /= np.sum(self.doc_topic_, axis=1)[:, np.newaxis]
 
         # delete attributes no longer needed after fitting to save memory and reduce clutter
