@@ -86,12 +86,14 @@ class LDA:
 
     """
 
-    def __init__(self, n_topics, n_iter=2000, alpha=0.1, eta=0.01, random_state=None,
+    def __init__(self, n_topics, n_iter=2000, alpha=0.1,
+                 alpha_=0.1, eta=0.01, random_state=None,
                  refresh=10):
         self.n_topics = n_topics
         self.n_iter = n_iter
         self.alpha = alpha
         self.eta = eta
+        self.alpha_ = alpha_
         # if random_state is None, check_random_state(None) does nothing
         # other than return the current numpy RandomState
         self.random_state = random_state
@@ -290,14 +292,22 @@ class LDA:
         """
         nzw, ndz, nz = self.nzw_, self.ndz_, self.nz_
         alpha = self.alpha
+        alpha_ = np.repeat(self.alpha, self.n_topics).astype(np.float64)
+        if self.alpha_ > 0:
+            alpha_ = alpha * self.n_topics * (
+                (self.nz_ + self.alpha_) / (np.sum(self.nz_) + self.alpha_ * self.n_topics))
         eta = self.eta
         nd = np.sum(ndz, axis=1).astype(np.intc)
-        return lda._lda._loglikelihood(nzw, ndz, nz, nd, alpha, eta)
+        return lda._lda._loglikelihood(nzw, ndz, nz, nd, alpha, alpha_, eta)
 
     def _sample_topics(self, rands):
         """Samples all topic assignments. Called once per iteration."""
         n_topics, vocab_size = self.nzw_.shape
         alpha = np.repeat(self.alpha, n_topics).astype(np.float64)
         eta = np.repeat(self.eta, vocab_size).astype(np.float64)
+        if self.alpha_ > 0:
+            alpha = alpha * self.n_topics * (
+                (self.nz_ + self.alpha_) / (np.sum(self.nz_) + self.alpha_ * self.n_topics))
+        # print alpha
         lda._lda._sample_topics(self.WS, self.DS, self.ZS, self.nzw_, self.ndz_, self.nz_,
                                 alpha, eta, rands)
