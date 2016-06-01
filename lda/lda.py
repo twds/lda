@@ -88,12 +88,13 @@ class LDA:
 
     def __init__(self, n_topics, n_iter=2000, alpha=0.1,
                  alpha_=0.1, eta=0.01, random_state=None,
-                 refresh=10):
+                 topic_in_set_dict={}, refresh=10):
         self.n_topics = n_topics
         self.n_iter = n_iter
         self.alpha = alpha
         self.eta = eta
         self.alpha_ = alpha_
+        self.dict = topic_in_set_dict
         # if random_state is None, check_random_state(None) does nothing
         # other than return the current numpy RandomState
         self.random_state = random_state
@@ -249,7 +250,7 @@ class LDA:
         self.components_ = (self.nzw_ + self.eta).astype(float)
         self.components_ /= np.sum(self.components_, axis=1)[:, np.newaxis]
         self.topic_word_ = self.components_
-        alpha = self.alpha
+        alpha = np.repeat(self.alpha, self.n_topics).astype(np.float64)
         if self.alpha_ > 0:
             alpha = self.alpha * self.n_topics * (
                 (self.nz_ + self.alpha_) / (np.sum(self.nz_) + self.alpha_ * self.n_topics))
@@ -276,7 +277,10 @@ class LDA:
         self.nzw_ = nzw_ = np.zeros((n_topics, W), dtype=np.intc)
         self.ndz_ = ndz_ = np.zeros((D, n_topics), dtype=np.intc)
         self.nz_ = nz_ = np.zeros(n_topics, dtype=np.intc)
-
+        # topic-in-set dict
+        self.dict_ = np.zeros(self.nzw_.shape[1], dtype=np.int32) - 1
+        for key, value in self.dict.items():
+            self.dict_[key] = value
         self.WS, self.DS = WS, DS = lda.utils.matrix_to_lists(X)
         self.ZS = ZS = np.empty_like(self.WS, dtype=np.intc)
         np.testing.assert_equal(N, len(WS))
@@ -313,5 +317,5 @@ class LDA:
             alpha = alpha * self.n_topics * (
                 (self.nz_ + self.alpha_) / (np.sum(self.nz_) + self.alpha_ * self.n_topics))
         # print alpha
-        lda._lda._sample_topics(self.WS, self.DS, self.ZS, self.nzw_, self.ndz_, self.nz_,
+        lda._lda._sample_topics(self.WS, self.DS, self.ZS, self.nzw_, self.ndz_, self.nz_, self.dict_,
                                 alpha, eta, rands)

@@ -37,7 +37,7 @@ cdef int searchsorted(double* arr, int length, double value) nogil:
     return imin
 
 
-def _sample_topics(int[:] WS, int[:] DS, int[:] ZS, int[:, :] nzw, int[:, :] ndz, int[:] nz,
+def _sample_topics(int[:] WS, int[:] DS, int[:] ZS, int[:, :] nzw, int[:, :] ndz, int[:] nz, int[:] dict_,
                    double[:] alpha, double[:] eta, double[:] rands):
     cdef int i, k, w, d, z, z_new
     cdef double r, dist_cum
@@ -69,7 +69,8 @@ def _sample_topics(int[:] WS, int[:] DS, int[:] ZS, int[:, :] nzw, int[:, :] ndz
 
             r = rands[i % n_rand] * dist_cum  # dist_cum == dist_sum[-1]
             z_new = searchsorted(dist_sum, n_topics, r)
-
+            if dict_[w] >= 0:
+                z_new = dict_[w]
             ZS[i] = z_new
             inc(nzw[z_new, w])
             inc(ndz[d, z_new])
