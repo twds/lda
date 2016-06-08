@@ -88,17 +88,22 @@ class LDA:
 
     def __init__(self, n_topics, n_iter=2000, alpha=0.1,
                  alpha_=0.1, eta=0.01, random_state=None,
-                 topic_in_set_dict={}, refresh=10):
+                 tis_dict={}, tis_eta=1, refresh=10,
+                 m_set_dict={}, c_set_dict={}, wr_lambda=1):
         self.n_topics = n_topics
         self.n_iter = n_iter
         self.alpha = alpha
         self.eta = eta
         self.alpha_ = alpha_
-        self.dict = topic_in_set_dict
+        self.dict = tis_dict
+        self.tis_eta = tis_eta
         # if random_state is None, check_random_state(None) does nothing
         # other than return the current numpy RandomState
         self.random_state = random_state
         self.refresh = refresh
+        self.m_set_dict = m_set_dict
+        self.c_set_dict = c_set_dict
+        self.wr_lambda = wr_lambda
 
         if alpha <= 0 or eta <= 0:
             raise ValueError("alpha and eta must be greater than zero")
@@ -263,6 +268,17 @@ class LDA:
         del self.ZS
         return self
 
+    def _init_word_relation_dict(self, set_dict, vocab_size):
+        if (len(set_dict) == 0):
+            col_size = 1
+        else:
+            col_size = max([len(x) for x in set_dict.values()])
+        dict_ = np.zeros((vocab_size, col_size), dtype=np.int32) - 1
+        for key in set_dict.keys():
+            for idx, value in enumerate(set_dict[key]):
+                dict_[key, idx] = value
+        return dict_
+
     def _initialize(self, X):
         D, W = X.shape
         N = int(X.sum())
@@ -277,10 +293,16 @@ class LDA:
         self.nzw_ = nzw_ = np.zeros((n_topics, W), dtype=np.intc)
         self.ndz_ = ndz_ = np.zeros((D, n_topics), dtype=np.intc)
         self.nz_ = nz_ = np.zeros(n_topics, dtype=np.intc)
-        # topic-in-set dict
-        self.dict_ = np.zeros(self.nzw_.shape[1], dtype=np.int32) - 1
-        for key, value in self.dict.items():
-            self.dict_[key] = value
+        # init topic-in-set dict
+        self.dict_ = np.zeros((W, n_topics), dtype=np.double) + 1
+        for key in self.dict.keys():
+            for idx in range(len(self.dict_[key])):
+                if idx in self.dict[key]:
+                    self.dict_[key, idx] = 1
+                else:
+                    self.dict_[key, idx] = 1 - self.tis_eta
+        self.m_set_dict_ = self._init_word_relation_dict(self.m_set_dict, W)
+        self.c_set_dict_ = self._init_word_relation_dict(self.c_set_dict, W)
         self.WS, self.DS = WS, DS = lda.utils.matrix_to_lists(X)
         self.ZS = ZS = np.empty_like(self.WS, dtype=np.intc)
         np.testing.assert_equal(N, len(WS))
@@ -295,7 +317,6 @@ class LDA:
 
     def loglikelihood(self):
         """Calculate complete log likelihood, log p(w,z)
-
         Formula used is log p(w,z) = log p(w|z) + log p(z)
         """
         nzw, ndz, nz = self.nzw_, self.ndz_, self.nz_
@@ -311,11 +332,10 @@ class LDA:
     def _sample_topics(self, rands):
         """Samples all topic assignments. Called once per iteration."""
         n_topics, vocab_size = self.nzw_.shape
-        alpha = np.repeat(self.alpha, n_topics).astype(np.float64)
-        eta = np.repeat(self.eta, vocab_size).astype(np.float64)
-        if self.alpha_ > 0:
-            alpha = alpha * self.n_topics * (
-                (self.nz_ + self.alpha_) / (np.sum(self.nz_) + self.alpha_ * self.n_topics))
+        # alpha = np.repeat(self.alpha, n_topics).astype(np.float64)
+        # eta = np.repeat(self.eta, vocab_size).astype(np.float64)
+        term_num = np.sum(self.nz_)
         # print alpha
         lda._lda._sample_topics(self.WS, self.DS, self.ZS, self.nzw_, self.ndz_, self.nz_, self.dict_,
-                                alpha, eta, rands)
+                                self.m_set_dict_, self.c_set_dict_, self.wr_lambda,
+                                self.alpha, self.eta, self.alpha_, term_num, rands)
