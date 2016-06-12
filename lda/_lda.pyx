@@ -75,7 +75,7 @@ def _sample_topics(int[:] WS, int[:] DS, int[:] ZS, int[:, :] nzw, int[:, :] ndz
             for k in range(n_topics):
                 if alpha_ != 0:
                     ratio = (nz[k] + alpha_)/(term_num + alpha_ * n_topics)
-                    ratio = ratio / n_topics
+                    ratio = ratio * n_topics
                 prior_score = 1
                 for m in range(m_set_col):
                     if m_set_dict[w][m] < 0:
