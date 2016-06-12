@@ -11,6 +11,9 @@ import lda._lda
 import lda.utils
 
 logger = logging.getLogger('lda')
+# logging.basicConfig(level=logging.INFO)
+# logger.setLevel(logging.INFO)
+
 
 PY2 = sys.version_info[0] == 2
 if PY2:
@@ -115,6 +118,8 @@ class LDA:
         # configure console logging if not already configured
         if len(logger.handlers) == 1 and isinstance(logger.handlers[0], logging.NullHandler):
             logging.basicConfig(level=logging.INFO)
+        else:
+            logger.setLevel(logging.INFO)
 
     def fit(self, X, y=None):
         """Fit the model with X.

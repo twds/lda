@@ -11,7 +11,7 @@ my_dict[1] = [3]
 m_set_dict = {2: [0]}
 c_set_dict = {3: [0]}
 
-model = lda.LDA(n_topics=20, alpha=0.1, alpha_=0, n_iter=100, tis_dict=my_dict,
+model = lda.LDA(n_topics=20, alpha=0.1, alpha_=0, n_iter=100, tis_dict=my_dict, refresh=5,
                 m_set_dict=m_set_dict, c_set_dict=c_set_dict)
 model.fit(X)
 
