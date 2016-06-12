@@ -11,8 +11,8 @@ import lda._lda
 import lda.utils
 
 logger = logging.getLogger('lda')
-# logging.basicConfig(level=logging.INFO)
-# logger.setLevel(logging.INFO)
+logging.basicConfig(level=logging.INFO)
+logger.setLevel(logging.INFO)
 
 
 PY2 = sys.version_info[0] == 2
@@ -116,10 +116,10 @@ class LDA:
         self._rands = rng.rand(1024**2 // 8)  # 1MiB of random variates
 
         # configure console logging if not already configured
-        if len(logger.handlers) == 1 and isinstance(logger.handlers[0], logging.NullHandler):
-            logging.basicConfig(level=logging.INFO)
-        else:
-            logger.setLevel(logging.INFO)
+        # if len(logger.handlers) == 1 and isinstance(logger.handlers[0], logging.NullHandler):
+        #    logging.basicConfig(level=logging.INFO)
+        # else:
+        # logger.setLevel(logging.INFO)
 
     def fit(self, X, y=None):
         """Fit the model with X.
