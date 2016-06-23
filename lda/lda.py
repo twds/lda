@@ -2,7 +2,9 @@
 """Latent Dirichlet allocation using collapsed Gibbs sampling"""
 
 from __future__ import absolute_import, division, unicode_literals  # noqa
+from imp import reload
 import logging
+reload(logging)
 import sys
 
 import numpy as np
@@ -10,8 +12,8 @@ import numpy as np
 import lda._lda
 import lda.utils
 
-logger = logging.getLogger('lda')
 logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger('lda')
 logger.setLevel(logging.INFO)
 
 
